@@ -1,21 +1,16 @@
 package com.example.mazesolver;
 
 import android.os.Bundle;
-import android.widget.Button;
-import android.os.Handler;
-import android.widget.FrameLayout;
-import android.widget.Toast;
 import android.view.View;
-
-
+import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.List;
-
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity {
 
     private MazeView mazeView;
+    private List<List<MazeView.Cell>> allPaths = new ArrayList<>();
+    private int currentPathIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,52 +18,54 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mazeView = findViewById(R.id.mazeView);
-
         Button solveButton = findViewById(R.id.solveButton);
         Button resetButton = findViewById(R.id.resetButton);
-
-        solveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DijkstraSolver solver = new DijkstraSolver(
-                        mazeView.getGrid(),
-                        mazeView.getCols(),
-                        mazeView.getRows()
-                );
-                List<MazeView.Cell> path = solver.solve();
-                mazeView.animateSolvedPath(path); // 🎉 Call animation method
-                Toast.makeText(MainActivity.this, "Solving...", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        resetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mazeView.resetMaze();
-                Toast.makeText(MainActivity.this, "Maze Reset!", Toast.LENGTH_SHORT).show();
-            }
-        });
         Button saveButton = findViewById(R.id.saveButton);
         Button loadButton = findViewById(R.id.loadButton);
+        Button nextPathButton = findViewById(R.id.nextPathButton);
+        Spinner algorithmSelector = findViewById(R.id.algorithmSelector);
+        SeekBar speedSlider = findViewById(R.id.speedSlider);
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mazeView.saveMaze(getApplicationContext());
-                Toast.makeText(MainActivity.this, "Maze saved!", Toast.LENGTH_SHORT).show();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Dijkstra", "A*"});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        algorithmSelector.setAdapter(adapter);
+
+        solveButton.setOnClickListener(v -> {
+            String selectedAlgo = algorithmSelector.getSelectedItem().toString();
+            List<MazeView.Cell> path;
+
+            if (selectedAlgo.equals("A*")) {
+                AStarSolver solver = new AStarSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                path = solver.solve();
+            } else {
+                DijkstraSolver solver = new DijkstraSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                path = solver.solve();
             }
+            mazeView.animateSolvedPath(path);
         });
 
-        loadButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mazeView.loadMaze(getApplicationContext());
-                Toast.makeText(MainActivity.this, "Maze loaded!", Toast.LENGTH_SHORT).show();
-            }
+        resetButton.setOnClickListener(v -> {
+            mazeView.resetMaze();
+            allPaths.clear();
+            currentPathIndex = 0;
         });
 
+        saveButton.setOnClickListener(v -> mazeView.saveMaze(getApplicationContext()));
+        loadButton.setOnClickListener(v -> mazeView.loadMaze(getApplicationContext()));
+
+        nextPathButton.setOnClickListener(v -> {
+            if (allPaths.isEmpty()) {
+                MultiplePathSolver solver = new MultiplePathSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                allPaths = solver.findAllPaths();
+                currentPathIndex = 0;
+            }
+            if (!allPaths.isEmpty()) {
+                mazeView.animateSolvedPath(allPaths.get(currentPathIndex));
+                Toast.makeText(this, "Showing path " + (currentPathIndex + 1) + "/" + allPaths.size(), Toast.LENGTH_SHORT).show();
+                currentPathIndex = (currentPathIndex + 1) % allPaths.size();
+            } else {
+                Toast.makeText(this, "No paths found!", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
-
-
 }

@@ -21,8 +21,9 @@ public class MazeView extends View {
     private List<Cell> animationPath = null;
     private int animationIndex = 0;
     private Handler animationHandler = new Handler(Looper.getMainLooper());
-    private int rows = 10;
-    private int cols = 10;
+    private int rows = 15;
+    private int cols = 15;
+
     private int cellSize;
     private Cell[][] cells;
 
@@ -269,17 +270,17 @@ public class MazeView extends View {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Cell) {
-                Cell other = (Cell) obj;
-                return this.x == other.x && this.y == other.y;
-            }
-            return false;
+            if (this == obj) return true;
+            if (!(obj instanceof Cell)) return false;
+            Cell other = (Cell) obj;
+            return x == other.x && y == other.y;
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(x, y);
         }
+
     }
     public void resetMaze() {
         generateMaze();        // Regenerate the maze
