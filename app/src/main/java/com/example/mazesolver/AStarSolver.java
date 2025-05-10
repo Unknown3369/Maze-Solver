@@ -14,58 +14,67 @@ public class AStarSolver {
         this.rows = rows;
     }
 
-    public List<MazeView.Cell> solve() {
+    public static class Result {
+        public final List<MazeView.Cell> path;
+        public final Set<MazeView.Cell> visited;
+
+        public Result(List<MazeView.Cell> path, Set<MazeView.Cell> visited) {
+            this.path = path;
+            this.visited = visited;
+        }
+    }
+
+    public Result solve() {
+        Set<MazeView.Cell> visited = new HashSet<>();
         Map<MazeView.Cell, MazeView.Cell> cameFrom = new HashMap<>();
         Map<MazeView.Cell, Integer> gScore = new HashMap<>();
-        Map<MazeView.Cell, Integer> fScore = new HashMap<>();
+
+        PriorityQueue<MazeView.Cell> openSet = new PriorityQueue<>(Comparator.comparingInt(c -> gScore.getOrDefault(c, Integer.MAX_VALUE) + heuristic(c)));
 
         MazeView.Cell start = grid[0][0];
         MazeView.Cell goal = grid[cols - 1][rows - 1];
 
-        Comparator<MazeView.Cell> comparator = Comparator.comparingInt(fScore::get);
-        PriorityQueue<MazeView.Cell> openSet = new PriorityQueue<>(comparator);
-
         gScore.put(start, 0);
-        fScore.put(start, heuristic(start, goal));
         openSet.add(start);
-
-        Set<MazeView.Cell> closedSet = new HashSet<>();
 
         while (!openSet.isEmpty()) {
             MazeView.Cell current = openSet.poll();
+            visited.add(current);
 
             if (current.equals(goal)) break;
 
-            closedSet.add(current);
-
             for (MazeView.Cell neighbor : getNeighbors(current)) {
-                if (closedSet.contains(neighbor)) continue;
-
-                int tentativeG = gScore.getOrDefault(current, Integer.MAX_VALUE) + 1;
-
-                if (tentativeG < gScore.getOrDefault(neighbor, Integer.MAX_VALUE)) {
+                int tentativeGScore = gScore.getOrDefault(current, Integer.MAX_VALUE) + 1;
+                if (tentativeGScore < gScore.getOrDefault(neighbor, Integer.MAX_VALUE)) {
                     cameFrom.put(neighbor, current);
-                    gScore.put(neighbor, tentativeG);
-                    fScore.put(neighbor, tentativeG + heuristic(neighbor, goal));
-                    if (!openSet.contains(neighbor)) openSet.add(neighbor);
+                    gScore.put(neighbor, tentativeGScore);
+                    if (!openSet.contains(neighbor)) {
+                        openSet.add(neighbor);
+                    }
                 }
             }
         }
 
-        // Reconstruct path
-        List<MazeView.Cell> path = new ArrayList<>();
-        MazeView.Cell step = goal;
-        while (step != null && cameFrom.containsKey(step)) {
-            path.add(step);
-            step = cameFrom.get(step);
-        }
-        path.add(start);
-        Collections.reverse(path);
-        return path;
+        List<MazeView.Cell> path = reconstructPath(cameFrom, goal);
+        return new Result(path, visited);
     }
 
-    private int heuristic(MazeView.Cell a, MazeView.Cell b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); // Manhattan distance
+    private int heuristic(MazeView.Cell cell) {
+        return Math.abs(cell.x - (cols - 1)) + Math.abs(cell.y - (rows - 1));
+    }
+
+    private List<MazeView.Cell> reconstructPath(Map<MazeView.Cell, MazeView.Cell> cameFrom, MazeView.Cell goal) {
+        List<MazeView.Cell> path = new ArrayList<>();
+        MazeView.Cell current = goal;
+
+        while (current != null && cameFrom.containsKey(current)) {
+            path.add(current);
+            current = cameFrom.get(current);
+        }
+
+        path.add(grid[0][0]);
+        Collections.reverse(path);
+        return path;
     }
 
     private List<MazeView.Cell> getNeighbors(MazeView.Cell cell) {

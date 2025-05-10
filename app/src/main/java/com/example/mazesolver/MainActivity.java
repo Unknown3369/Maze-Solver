@@ -26,46 +26,73 @@ public class MainActivity extends AppCompatActivity {
         Spinner algorithmSelector = findViewById(R.id.algorithmSelector);
         SeekBar speedSlider = findViewById(R.id.speedSlider);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Dijkstra", "A*"});
+        // Populate algorithm choices
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"Dijkstra", "A*"});
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         algorithmSelector.setAdapter(adapter);
 
+        // Solve Maze
         solveButton.setOnClickListener(v -> {
             String selectedAlgo = algorithmSelector.getSelectedItem().toString();
-            List<MazeView.Cell> path;
 
             if (selectedAlgo.equals("A*")) {
-                AStarSolver solver = new AStarSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
-                path = solver.solve();
+                AStarSolver solver = new AStarSolver(
+                        mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                AStarSolver.Result result = solver.solve();
+                mazeView.animateSolvedPath(result.path, result.visited);
             } else {
-                DijkstraSolver solver = new DijkstraSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
-                path = solver.solve();
+                DijkstraSolver solver = new DijkstraSolver(
+                        mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                DijkstraSolver.Result result = solver.solve();
+                mazeView.animateSolvedPath(result.path, result.visited);
             }
-            mazeView.animateSolvedPath(path);
         });
 
+        // Reset maze
         resetButton.setOnClickListener(v -> {
             mazeView.resetMaze();
             allPaths.clear();
             currentPathIndex = 0;
         });
 
+        // Save maze
         saveButton.setOnClickListener(v -> mazeView.saveMaze(getApplicationContext()));
+
+        // Load maze
         loadButton.setOnClickListener(v -> mazeView.loadMaze(getApplicationContext()));
 
+        // Show multiple paths one-by-one
         nextPathButton.setOnClickListener(v -> {
             if (allPaths.isEmpty()) {
-                MultiplePathSolver solver = new MultiplePathSolver(mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
+                MultiplePathSolver solver = new MultiplePathSolver(
+                        mazeView.getGrid(), mazeView.getCols(), mazeView.getRows());
                 allPaths = solver.findAllPaths();
                 currentPathIndex = 0;
             }
+
             if (!allPaths.isEmpty()) {
-                mazeView.animateSolvedPath(allPaths.get(currentPathIndex));
-                Toast.makeText(this, "Showing path " + (currentPathIndex + 1) + "/" + allPaths.size(), Toast.LENGTH_SHORT).show();
+                List<MazeView.Cell> path = allPaths.get(currentPathIndex);
+                mazeView.setSolvedPath(path);
+                Toast.makeText(this,
+                        "Showing path " + (currentPathIndex + 1) + "/" + allPaths.size(),
+                        Toast.LENGTH_SHORT).show();
                 currentPathIndex = (currentPathIndex + 1) % allPaths.size();
             } else {
                 Toast.makeText(this, "No paths found!", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        // Set animation speed
+        speedSlider.setMax(200);
+        speedSlider.setProgress(50); // default
+        speedSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mazeView.setAnimationSpeed(Math.max(10, progress));
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 }
