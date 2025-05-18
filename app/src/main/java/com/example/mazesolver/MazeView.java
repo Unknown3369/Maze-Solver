@@ -26,6 +26,7 @@ public class MazeView extends View {
     private int animationSpeed = 50;
 
     private int playerX = 0, playerY = 0;
+    private final List<Cell> playerPath = new ArrayList<>();
 
     private final Paint wallPaint = new Paint();
     private final Paint paint = new Paint();
@@ -74,7 +75,6 @@ public class MazeView extends View {
         }
         generateMazeWithExtraPaths(10);
     }
-
     public void resetMaze() {
         initMaze();
         solvedPath.clear();
@@ -83,6 +83,7 @@ public class MazeView extends View {
         playerX = 0;
         playerY = 0;
         invalidate();
+        playerPath.clear();
     }
 
     public void saveMaze(Context context) {
@@ -172,16 +173,56 @@ public class MazeView extends View {
         Cell current = grid[playerX][playerY];
         Cell next = grid[newX][newY];
 
-        if (dx == -1 && !current.leftWall) playerX--;
-        else if (dx == 1 && !current.rightWall) playerX++;
-        else if (dy == -1 && !current.topWall) playerY--;
-        else if (dy == 1 && !current.bottomWall) playerY++;
+        boolean moved = false;
 
-        invalidate();
-
-        if (playerX == cols - 1 && playerY == rows - 1) {
-            Toast.makeText(getContext(), "🎉 You reached the goal!", Toast.LENGTH_SHORT).show();
+        if (dx == -1 && !current.leftWall) {
+            playerX--;
+            moved = true;
+        } else if (dx == 1 && !current.rightWall) {
+            playerX++;
+            moved = true;
+        } else if (dy == -1 && !current.topWall) {
+            playerY--;
+            moved = true;
+        } else if (dy == 1 && !current.bottomWall) {
+            playerY++;
+            moved = true;
         }
+
+        if (moved) {
+            Cell visited = grid[playerX][playerY];
+            if (!playerPath.contains(visited)) {
+                playerPath.add(visited);
+            }
+
+            invalidate();
+
+            if (playerX == cols - 1 && playerY == rows - 1) {
+                evaluatePlayerPath(); // compare paths
+                Toast.makeText(getContext(), "🎉 You reached the goal!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+    private void evaluatePlayerPath() {
+        DijkstraSolver solver = new DijkstraSolver(grid, cols, rows);
+        DijkstraSolver.Result result = solver.solve();
+        List<Cell> optimalPath = result.path;
+
+        int matchCount = 0;
+        int len = Math.min(playerPath.size(), optimalPath.size());
+
+        for (int i = 0; i < len; i++) {
+            if (playerPath.get(i).equals(optimalPath.get(i))) {
+                matchCount++;
+            } else {
+                break; // only count consecutive matches from start
+            }
+        }
+
+        float similarity = (float) matchCount / optimalPath.size();
+        int score = Math.round(similarity * 10);
+
+        Toast.makeText(getContext(), "Your score: " + score + "/10", Toast.LENGTH_LONG).show();
     }
 
     @Override

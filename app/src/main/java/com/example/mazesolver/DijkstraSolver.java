@@ -14,7 +14,17 @@ public class DijkstraSolver {
         this.rows = rows;
     }
 
-    public List<MazeView.Cell> solve() {
+    public static class Result {
+        public final List<MazeView.Cell> path;
+        public final Set<MazeView.Cell> visited;
+
+        public Result(List<MazeView.Cell> path, Set<MazeView.Cell> visited) {
+            this.path = path;
+            this.visited = visited;
+        }
+    }
+
+    public Result solve() {
         Map<MazeView.Cell, MazeView.Cell> parentMap = new HashMap<>();
         Queue<MazeView.Cell> queue = new LinkedList<>();
         Set<MazeView.Cell> visited = new HashSet<>();
@@ -28,9 +38,7 @@ public class DijkstraSolver {
         while (!queue.isEmpty()) {
             MazeView.Cell current = queue.poll();
 
-            if (current == goal) {
-                break;
-            }
+            if (current.equals(goal)) break;
 
             for (MazeView.Cell neighbor : getNeighbors(current)) {
                 if (!visited.contains(neighbor)) {
@@ -48,9 +56,11 @@ public class DijkstraSolver {
             path.add(step);
             step = parentMap.get(step);
         }
+
         path.add(start);
         Collections.reverse(path);
-        return path;
+
+        return new Result(path, visited);
     }
 
     private List<MazeView.Cell> getNeighbors(MazeView.Cell cell) {
