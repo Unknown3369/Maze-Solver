@@ -22,15 +22,15 @@ public class MazeView extends View {
     private List<List<Cell>> allPaths = new ArrayList<>();
     private List<Cell> solvedPath = new ArrayList<>();
     private Set<Cell> visitedCells = new HashSet<>();
+    private List<Cell> playerPath = new ArrayList<>();
+
     private final Handler handler = new Handler();
     private int animationSpeed = 50;
 
     private int playerX = 0, playerY = 0;
-    private final List<Cell> playerPath = new ArrayList<>();
 
     private final Paint wallPaint = new Paint();
     private final Paint paint = new Paint();
-
     private final GestureDetector gestureDetector;
 
     public MazeView(Context context, AttributeSet attrs) {
@@ -75,6 +75,7 @@ public class MazeView extends View {
         }
         generateMazeWithExtraPaths(10);
     }
+
     public void resetMaze() {
         initMaze();
         solvedPath.clear();
@@ -82,8 +83,8 @@ public class MazeView extends View {
         allPaths.clear();
         playerX = 0;
         playerY = 0;
-        invalidate();
         playerPath.clear();
+        invalidate();
     }
 
     public void saveMaze(Context context) {
@@ -111,7 +112,6 @@ public class MazeView extends View {
 
         canvas.drawColor(Color.BLACK);
 
-        // 1. Draw maze walls
         paint.setColor(Color.WHITE);
         paint.setStrokeWidth(4);
         for (int x = 0; x < cols; x++) {
@@ -129,7 +129,6 @@ public class MazeView extends View {
             }
         }
 
-        // 2. Draw visited cells (algorithm exploration)
         paint.setColor(Color.YELLOW);
         paint.setStyle(Paint.Style.FILL);
         for (Cell cell : visitedCells) {
@@ -138,7 +137,6 @@ public class MazeView extends View {
             canvas.drawCircle(cx, cy, cellSize / 6f, paint);
         }
 
-        // 3. Draw solved path (final answer)
         if (solvedPath != null && !solvedPath.isEmpty()) {
             paint.setColor(Color.CYAN);
             paint.setStrokeWidth(6);
@@ -150,13 +148,11 @@ public class MazeView extends View {
             }
         }
 
-        // 4. Draw player
         paint.setColor(Color.BLUE);
         float px = (playerX + 0.5f) * cellSize;
         float py = (playerY + 0.5f) * cellSize;
         canvas.drawCircle(px, py, cellSize / 3f, paint);
 
-        // 5. Draw Start and End points
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.GREEN);
         canvas.drawCircle(cellSize / 2f, cellSize / 2f, cellSize / 4f, paint);
@@ -174,6 +170,11 @@ public class MazeView extends View {
         Cell next = grid[newX][newY];
 
         boolean moved = false;
+
+        // Add the starting point only once
+        if (playerPath.isEmpty()) {
+            playerPath.add(current);
+        }
 
         if (dx == -1 && !current.leftWall) {
             playerX--;
@@ -198,24 +199,34 @@ public class MazeView extends View {
             invalidate();
 
             if (playerX == cols - 1 && playerY == rows - 1) {
-                evaluatePlayerPath(); // compare paths
+                evaluatePlayerPath();
                 Toast.makeText(getContext(), "🎉 You reached the goal!", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
+
     private void evaluatePlayerPath() {
         DijkstraSolver solver = new DijkstraSolver(grid, cols, rows);
         DijkstraSolver.Result result = solver.solve();
         List<Cell> optimalPath = result.path;
 
+        if (optimalPath == null || optimalPath.isEmpty()) {
+            Toast.makeText(getContext(), "No optimal path found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         int matchCount = 0;
         int len = Math.min(playerPath.size(), optimalPath.size());
 
         for (int i = 0; i < len; i++) {
-            if (playerPath.get(i).equals(optimalPath.get(i))) {
+            Cell userCell = playerPath.get(i);
+            Cell optimalCell = optimalPath.get(i);
+
+            if (userCell.x == optimalCell.x && userCell.y == optimalCell.y) {
                 matchCount++;
             } else {
-                break; // only count consecutive matches from start
+                break; // Only consecutive matches from the beginning
             }
         }
 
@@ -224,6 +235,7 @@ public class MazeView extends View {
 
         Toast.makeText(getContext(), "Your score: " + score + "/10", Toast.LENGTH_LONG).show();
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
