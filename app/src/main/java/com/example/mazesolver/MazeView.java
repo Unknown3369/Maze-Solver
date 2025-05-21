@@ -1,6 +1,8 @@
 package com.example.mazesolver;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -9,6 +11,7 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.*;
@@ -16,8 +19,8 @@ import java.util.*;
 
 public class MazeView extends View {
 
-    private int cols = 10, rows = 10;
-    private final int cellSize = 80;
+    private int cols = 13, rows = 13;
+    private final int cellSize = 75;
     private Cell[][] grid;
     private List<List<Cell>> allPaths = new ArrayList<>();
     private List<Cell> solvedPath = new ArrayList<>();
@@ -87,24 +90,56 @@ public class MazeView extends View {
         invalidate();
     }
 
-    public void saveMaze(Context context) {
-        try (ObjectOutputStream out = new ObjectOutputStream(context.openFileOutput("maze.dat", Context.MODE_PRIVATE))) {
+    // Save maze with name
+    public void saveMaze(Context context, String name) {
+        try {
+            FileOutputStream fos = context.openFileOutput(name + ".maze", Context.MODE_PRIVATE);
+            ObjectOutputStream out = new ObjectOutputStream(fos);
             out.writeObject(grid);
-            Toast.makeText(context, "Maze saved", Toast.LENGTH_SHORT).show();
+            out.close();
+
+            // Update saved maze list
+            SharedPreferences prefs = context.getSharedPreferences("maze_prefs", Context.MODE_PRIVATE);
+            Set<String> saved = new HashSet<>(prefs.getStringSet("saved_names", new HashSet<>()));
+            saved.add(name);
+            prefs.edit().putStringSet("saved_names", saved).apply();
+
+            Toast.makeText(context, "Maze \"" + name + "\" saved", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void loadMaze(Context context) {
-        try (ObjectInputStream in = new ObjectInputStream(context.openFileInput("maze.dat"))) {
+    // Load maze by name
+    public void loadMaze(Context context, String name) {
+        try {
+            FileInputStream fis = context.openFileInput(name + ".maze");
+            ObjectInputStream in = new ObjectInputStream(fis);
             grid = (Cell[][]) in.readObject();
+            in.close();
             invalidate();
-            Toast.makeText(context, "Maze loaded", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Loaded maze: " + name, Toast.LENGTH_SHORT).show();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
+
+    // Get list of saved mazes
+    public static Set<String> getSavedMazeNames(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("maze_prefs", Context.MODE_PRIVATE);
+        return prefs.getStringSet("saved_names", new HashSet<>());
+    }
+
+    // Delete maze by name
+    public static void deleteMaze(Context context, String name) {
+        context.deleteFile(name + ".maze");
+
+        SharedPreferences prefs = context.getSharedPreferences("maze_prefs", Context.MODE_PRIVATE);
+        Set<String> saved = new HashSet<>(prefs.getStringSet("saved_names", new HashSet<>()));
+        saved.remove(name);
+        prefs.edit().putStringSet("saved_names", saved).apply();
+    }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -286,6 +321,8 @@ public class MazeView extends View {
     public int getRows() {
         return rows;
     }
+
+
 
     public static class Cell implements Serializable {
         int x, y;

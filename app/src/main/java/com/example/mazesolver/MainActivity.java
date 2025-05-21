@@ -1,5 +1,6 @@
 package com.example.mazesolver;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
@@ -24,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         Button loadButton = findViewById(R.id.loadButton);
         Button nextPathButton = findViewById(R.id.nextPathButton);
         Spinner algorithmSelector = findViewById(R.id.algorithmSelector);
-        SeekBar speedSlider = findViewById(R.id.speedSlider);
+//        SeekBar speedSlider = findViewById(R.id.speedSlider);
 
         // Populate algorithm choices
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
@@ -57,11 +58,57 @@ public class MainActivity extends AppCompatActivity {
             currentPathIndex = 0;
         });
 
-        // Save maze
-        saveButton.setOnClickListener(v -> mazeView.saveMaze(getApplicationContext()));
+        // Save maze button
+        saveButton.setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            new AlertDialog.Builder(this)
+                    .setTitle("Save Maze As")
+                    .setView(input)
+                    .setPositiveButton("Save", (dialog, which) -> {
+                        String name = input.getText().toString().trim();
+                        if (!name.isEmpty()) {
+                            mazeView.saveMaze(this, name);
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
 
-        // Load maze
-        loadButton.setOnClickListener(v -> mazeView.loadMaze(getApplicationContext()));
+        // Load maze button
+        loadButton.setOnClickListener(v -> {
+            Set<String> names = MazeView.getSavedMazeNames(this);
+            if (names.isEmpty()) {
+                Toast.makeText(this, "No saved mazes found", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String[] nameArray = names.toArray(new String[0]);
+            new AlertDialog.Builder(this)
+                    .setTitle("Load Maze")
+                    .setItems(nameArray, (dialog, which) -> {
+                        String selected = nameArray[which];
+                        mazeView.loadMaze(this, selected);
+                    })
+                    .show();
+        });
+
+        //Delete maze Button
+        Button deleteButton = findViewById(R.id.deleteButton);
+        deleteButton.setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete Maze")
+                    .setView(input)
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        String name = input.getText().toString().trim();
+                        if (!name.isEmpty()) {
+                            mazeView.deleteMaze(this, name);
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
 
         // Show multiple paths one-by-one
         nextPathButton.setOnClickListener(v -> {
@@ -85,14 +132,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Set animation speed
-        speedSlider.setMax(200);
-        speedSlider.setProgress(50); // default
-        speedSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mazeView.setAnimationSpeed(Math.max(10, progress));
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
+//        speedSlider.setMax(200);
+//        speedSlider.setProgress(50); // default
+//        speedSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//                mazeView.setAnimationSpeed(Math.max(10, progress));
+//            }
+//            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+//            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+//        });
     }
 }

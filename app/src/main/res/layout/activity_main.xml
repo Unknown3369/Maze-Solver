@@ -59,22 +59,28 @@
 
         <Button
             android:id="@+id/saveButton"
-            android:layout_width="wrap_content"
+            android:layout_width="89dp"
             android:layout_height="wrap_content"
             android:text="Save Maze" />
 
         <Button
             android:id="@+id/loadButton"
-            android:layout_width="wrap_content"
+            android:layout_width="88dp"
             android:layout_height="wrap_content"
-            android:text="Load Maze"
-            android:layout_marginStart="16dp" />
+            android:layout_marginStart="16dp"
+            android:text="Load Maze" />
 
         <Button
             android:id="@+id/nextPathButton"
+            android:layout_width="86dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Next Path" />
+        <Button
+            android:id="@+id/deleteButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Next Path"
+            android:text="Delete Maze"
             android:layout_marginStart="16dp" />
 
     </LinearLayout>
@@ -84,34 +90,34 @@
         android:id="@+id/speedControlLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toBottomOf="@id/buttonLayout2"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonLayout2">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SLOW" />
+        <!--        <TextView-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:text="SLOW" />-->
 
-        <SeekBar
-            android:id="@+id/speedSlider"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:max="200"
-            android:progress="100"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp" />
+        <!--        <SeekBar-->
+        <!--            android:id="@+id/speedSlider"-->
+        <!--            android:layout_width="0dp"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="1"-->
+        <!--            android:max="200"-->
+        <!--            android:progress="100"-->
+        <!--            android:layout_marginStart="8dp"-->
+        <!--            android:layout_marginEnd="8dp" />-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FAST" />
+        <!--        <TextView-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:text="FAST" />-->
     </LinearLayout>
 
     <!-- Algorithm selector -->
