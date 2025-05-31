@@ -380,6 +380,7 @@ public class MazeView extends View {
         }
     }
 
+
     private void generateMazeWithExtraPaths(int extraPassages) {
         generateMazeRecursiveBacktracking(0, 0);
         Random rand = new Random();
